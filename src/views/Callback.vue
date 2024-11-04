@@ -5,6 +5,8 @@
 </template>
 
 <script>
+import Cookies from 'js-cookie';
+
 export default {
   name: 'Callback',
   created() {
@@ -19,8 +21,12 @@ export default {
 
     if (hash.access_token) {
       this.$store.commit('setToken', hash.access_token);
-      localStorage.setItem('spotify_token', hash.access_token);
+      // Clear the hash from URL
+      window.location.hash = '';
       this.$router.push('/dashboard');
+    } else {
+      // Handle error case
+      this.$router.push('/');
     }
   }
 };

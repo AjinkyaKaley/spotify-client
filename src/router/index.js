@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Dashboard from '../views/Dashboard.vue';
 import Login from '../views/Login.vue';
 import Callback from '../views/Callback.vue';
+import Cookies from 'js-cookie';
 
 const routes = [
   {
@@ -28,7 +29,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('spotify_token');
+  const token = Cookies.get('spotify_token');
   if (to.matched.some(record => record.meta.requiresAuth) && !token) {
     next('/');
   } else {
