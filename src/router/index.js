@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import ChatUi from '../views/ChatUi.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Login from '../views/Login.vue';
 import Callback from '../views/Callback.vue';

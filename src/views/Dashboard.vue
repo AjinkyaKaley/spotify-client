@@ -67,7 +67,7 @@
   </div>
 </template>
 
-<script>
+<script>  
 import { mapState } from 'vuex';
 
 export default {
@@ -78,7 +78,7 @@ export default {
   methods: {
     logout() {
       this.$store.dispatch('logout');
-      this.$router.push('/');
+      this.$router.push('/');   
     },
     async showTrackDetails(track) {
       this.$store.commit('setSelectedTrack', track);
