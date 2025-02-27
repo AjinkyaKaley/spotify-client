@@ -8,6 +8,27 @@
       </div>
     </header>
 
+    <div class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
+      <div class="sidebar-header">
+        <h3 v-if="!sidebarCollapsed">Components</h3>
+        <button class="toggle-btn" @click="toggleSidebar">
+          <i :class="sidebarCollapsed ? 'bi bi-arrow-right' : 'bi bi-arrow-left'"></i>
+        </button>
+      </div>
+      <div v-if="!sidebarCollapsed" class="sidebar-content">
+        <!-- Different types of divs -->
+        <div 
+          v-for="(item, index) in componentTypes" 
+          :key="index" 
+          class="component-item"
+          v-b-popover.hover.right="item.description"
+        >
+          <i :class="'bi ' + item.icon"></i>
+          <span>{{ item.name }}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="dashboard-content">
       <div class="section">
         <h3>Top Tracks</h3>
@@ -75,7 +96,19 @@ export default {
   computed: {
     ...mapState(['userProfile', 'topTracks', 'selectedTrack', 'trackMetadata'])
   },
+  data(){
+    return{
+      sidebarCollapsed: false,
+      componentTypes: [
+        { name: 'Text Block', icon: 'bi-file-text', description: 'Add a block of text content' }
+        // other component types...
+      ]
+    }
+  },
   methods: {
+    toggleSidebar(){
+      this.sidebarCollapsed = !this.sidebarCollapsed
+    },
     logout() {
       this.$store.dispatch('logout');
       this.$router.push('/');   
@@ -96,7 +129,8 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss">
+
 .dashboard {
   padding: 20px;
 }
