@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div>
     <header class="header">
       <div class="user-profile" v-if="userProfile">
         <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
@@ -7,27 +7,6 @@
         <button @click="logout" class="logout-button">Logout</button>
       </div>
     </header>
-
-    <div class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
-      <div class="sidebar-header">
-        <h3 v-if="!sidebarCollapsed">Components</h3>
-        <button class="toggle-btn" @click="toggleSidebar">
-          <i :class="sidebarCollapsed ? 'bi bi-arrow-right' : 'bi bi-arrow-left'"></i>
-        </button>
-      </div>
-      <div v-if="!sidebarCollapsed" class="sidebar-content">
-        <!-- Different types of divs -->
-        <div 
-          v-for="(item, index) in componentTypes" 
-          :key="index" 
-          class="component-item"
-          v-b-popover.hover.right="item.description"
-        >
-          <i :class="'bi ' + item.icon"></i>
-          <span>{{ item.name }}</span>
-        </div>
-      </div>
-    </div>
 
     <div class="dashboard-content">
       <div class="section">

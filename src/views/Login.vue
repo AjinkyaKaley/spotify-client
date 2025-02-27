@@ -1,7 +1,6 @@
 <template>
-  <div class="login">
-    <h1>Spotify Dashboard</h1>
-    <button @click="login" class="login-button">
+  <div class="flex flex-col items-center justify-center h-screen">
+    <button @click="login" class="bg-[#1DB954] text-white px-6 py-3 rounded-3xl border-0 cursor-pointer text-sm">
       Login with Spotify
     </button>
   </div>
@@ -28,15 +27,5 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100vh;
-}
-
-.login-button {
-  background-color: #1DB954;
-  color: white;
-  padding: 15px 30px;
-  border: none;
-  border-radius: 25px;
-  font-size: 16px;
-  cursor: pointer;
 }
 </style> 
