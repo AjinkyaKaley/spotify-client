@@ -2,7 +2,7 @@
   <BContainer fluid>
     <BRow class="d-flex align-items-center justify-content-center vh-100">
       <BCol class="text-center">
-        <BButton @click="login" style="background-color: #1ED760; cursor: pointer">
+        <BButton @click="login" style ="background-color: #1ED760; cursor: pointer">
           Login with Spotify
         </BButton>
       </BCol>
@@ -24,12 +24,5 @@ export default {
 };
 </script>
 
-<style scoped>
-.login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
-</style> 
+<style>
+</style>

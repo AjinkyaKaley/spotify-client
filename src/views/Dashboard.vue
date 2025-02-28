@@ -1,74 +1,57 @@
 <template>
   <div>
-    <header class="header">
-      <div class="user-profile" v-if="userProfile">
-        <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
-        <h2>{{ userProfile.display_name }}</h2>
-        <!-- <BButton @click="logout" class="logout-button">Logout</BButton> -->
-        <BButton variant="outline-primary">Button</BButton>
-      </div>
-    </header>
+    <BContainer fluid class="m-2">
+      <BRow class="bg-secondary p-2">
+        <BCol>
+          <div class="user-profile" v-if="userProfile">
+            <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
+            <h2>{{ userProfile.display_name }}</h2>
+            <BButton>Logout</BButton>
+          </div>
+        </BCol>
+      </BRow>
+    </BContainer>
 
-    <div class="dashboard-content">
-      <div class="section">
-        <h3>Top Tracks</h3>
+    <BContainer fluid class="m-2">
+      <BRow class="p-2">
+        <BCol>
+          <span></span>
+          <BDropdown text="Filter">
+            <BDropdownItem @click="displayTopTracks()">Top Tracks</BDropdownItem>
+            <BDropdownItem @click="displayPlaylist()">Playlist</BDropdownItem>
+          </BDropdown>
+        </BCol>
+      </BRow>
+    </BContainer>
+
+    <BContainer fluid class="m-2">
+      <BRow class="p-2" v-if="showTopTracks">
         <div class="tracks-grid">
-          <div v-for="track in topTracks" 
-               :key="track.id" 
-               class="track-card"
-               @click="showTrackDetails(track)">
-            <img :src="track.album.images[0].url" :alt="track.name">
-            <div class="track-info">
-              <h4>{{ track.name }}</h4>
-              <p>{{ track.artists[0].name }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Track Metadata Modal -->
-      <div v-if="selectedTrack" class="modal">
-        <div class="modal-content">
-          <span class="close" @click="closeModal">&times;</span>
-          <div class="track-details">
-            <img :src="selectedTrack.album.images[0].url" :alt="selectedTrack.name">
-            <h2>{{ selectedTrack.name }}</h2>
-            <p>Artist: {{ selectedTrack.artists[0].name }}</p>
-            <p>Album: {{ selectedTrack.album.name }}</p>
-            
-            <div v-if="trackMetadata" class="track-metadata">
-              <h3>Audio Features</h3>
-              <div class="features-grid">
-                <div class="feature">
-                  <span>Danceability</span>
-                  <div class="progress-bar">
-                    <div :style="{width: `${trackMetadata.danceability * 100}%`}" class="progress"></div>
-                  </div>
-                </div>
-                <div class="feature">
-                  <span>Energy</span>
-                  <div class="progress-bar">
-                    <div :style="{width: `${trackMetadata.energy * 100}%`}" class="progress"></div>
-                  </div>
-                </div>
-                <div class="feature">
-                  <span>Valence</span>
-                  <div class="progress-bar">
-                    <div :style="{width: `${trackMetadata.valence * 100}%`}" class="progress"></div>
-                  </div>
-                </div>
+          <BCol v-for="track in topTracks">
+            <div  
+              :key="track.id" 
+              class="track-card">
+              <img :src="track.album.images[0].url" :alt="track.name">
+              <div class="track-info">
+                <h4>{{ track.name }}</h4>
+                <p>{{ track.artists[0].name }}</p>
               </div>
-              <p>Key: {{ trackMetadata.key }}</p>
-              <p>Tempo: {{ Math.round(trackMetadata.tempo) }} BPM</p>
             </div>
-          </div>
+          </BCol>
         </div>
-      </div>
-    </div>
+      </BRow>
+
+      <BRow class="p-2" v-if="showPlaylist">
+        <BCol>
+          <div>Nothing</div>
+        </BCol>
+      </BRow>
+    </BContainer>
   </div>
 </template>
 
 <script>  
+import { BCol, BContainer, BRow } from 'bootstrap-vue-next';
 import { mapState } from 'vuex';
 
 export default {
@@ -79,9 +62,10 @@ export default {
   data(){
     return{
       sidebarCollapsed: false,
+      showTopTracks: false,
+      showPlaylist: false,
       componentTypes: [
         { name: 'Text Block', icon: 'bi-file-text', description: 'Add a block of text content' }
-        // other component types...
       ]
     }
   },
@@ -92,6 +76,14 @@ export default {
     logout() {
       this.$store.dispatch('logout');
       this.$router.push('/');   
+    },
+    async displayTopTracks(){
+      this.showTopTracks = true;
+      this.showPlaylist = false;
+    },
+    async displayPlaylist(){
+      this.showPlaylist = true;
+      this.showTopTracks = false;
     },
     async showTrackDetails(track) {
       this.$store.commit('setSelectedTrack', track);
@@ -110,14 +102,6 @@ export default {
 </script>
 
 <style lang="scss">
-
-.dashboard {
-  padding: 20px;
-}
-
-.header {
-  margin-bottom: 30px;
-}
 
 .user-profile {
   display: flex;
