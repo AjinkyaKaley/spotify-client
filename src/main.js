@@ -10,5 +10,6 @@ import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 const app = createApp(App)
 app.use(router)
 app.use(store)
+document.documentElement.setAttribute('data-bs-theme', 'dark')
 app.use(createBootstrap)
 app.mount('#app') 

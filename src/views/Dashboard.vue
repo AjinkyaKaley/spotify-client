@@ -4,7 +4,8 @@
       <div class="user-profile" v-if="userProfile">
         <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
         <h2>{{ userProfile.display_name }}</h2>
-        <button @click="logout" class="logout-button">Logout</button>
+        <!-- <BButton @click="logout" class="logout-button">Logout</BButton> -->
+        <BButton variant="outline-primary">Button</BButton>
       </div>
     </header>
 

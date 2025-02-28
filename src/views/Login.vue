@@ -1,12 +1,16 @@
 <template>
-  <div class="flex flex-col items-center justify-center h-screen">
-    <button @click="login" class="bg-[#1DB954] text-white px-6 py-3 rounded-3xl border-0 cursor-pointer text-sm">
-      Login with Spotify
-    </button>
-  </div>
+  <BContainer fluid>
+    <BRow class="d-flex align-items-center justify-content-center vh-100">
+      <BCol class="text-center">
+        <BButton @click="login" style="background-color: #1ED760; cursor: pointer">
+          Login with Spotify
+        </BButton>
+      </BCol>
+    </BRow>
+  </BContainer>
 </template>
-
 <script>
+import { BButton, BCol, BContainer, BRow } from 'bootstrap-vue-next';
 import { SPOTIFY_CONFIG } from '../config/spotify';
 
 export default {
