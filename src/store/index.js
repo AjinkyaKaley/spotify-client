@@ -83,6 +83,19 @@ export default createStore({
       } catch (error) {
         console.error('Error fetching track metadata:', error);
       }
+    },
+    async fetchUserPlaylists({commit, state}, userId){
+      try{
+        const response = await axios.get(`https://api.spotify.com/v1/users/${userId}/playlists`,{
+          headers: {
+            Authorization: `Bearer ${state.token}`
+          }
+        });
+        commit('setPlaylists', response.data.items);
+      }
+      catch(error){
+        console.error('Error fetching track metadata:', error);
+      }
     }
   }
 }); 

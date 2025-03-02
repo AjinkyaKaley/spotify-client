@@ -6,7 +6,7 @@
           <div class="user-profile" v-if="userProfile">
             <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
             <h2>{{ userProfile.display_name }}</h2>
-            <BButton>Logout</BButton>
+            <BButton @click="logout">Logout</BButton>
           </div>
         </BCol>
       </BRow>
@@ -18,7 +18,7 @@
           <span></span>
           <BDropdown text="Filter">
             <BDropdownItem @click="displayTopTracks()">Top Tracks</BDropdownItem>
-            <BDropdownItem @click="displayPlaylist()">Playlist</BDropdownItem>
+            <BDropdownItem @click="displayPlaylist(userProfile)">Playlist</BDropdownItem>
           </BDropdown>
         </BCol>
       </BRow>
@@ -43,7 +43,18 @@
 
       <BRow class="p-2" v-if="showPlaylist">
         <BCol>
-          <div>Nothing</div>
+          <div class="tracks-grid">
+          <BCol v-for="playlist in playlists">
+            <div  
+              :key="playlist.id" 
+              class="track-card">
+              <img :src="playlist.images[0].url" :alt="playlist.name">
+              <div class="track-info">
+                <h4>{{ playlist.name }}</h4>
+              </div>
+            </div>
+          </BCol>
+        </div>
         </BCol>
       </BRow>
     </BContainer>
@@ -57,7 +68,7 @@ import { mapState } from 'vuex';
 export default {
   name: 'Dashboard',
   computed: {
-    ...mapState(['userProfile', 'topTracks', 'selectedTrack', 'trackMetadata'])
+    ...mapState(['userProfile', 'topTracks', 'selectedTrack', 'trackMetadata', 'playlists'])
   },
   data(){
     return{
@@ -78,10 +89,12 @@ export default {
       this.$router.push('/');   
     },
     async displayTopTracks(){
+      await this.$store.dispatch('fetchTopTracks');
       this.showTopTracks = true;
       this.showPlaylist = false;
     },
-    async displayPlaylist(){
+    async displayPlaylist(userProfile){
+      await this.$store.dispatch('fetchUserPlaylists', userProfile.id);
       this.showPlaylist = true;
       this.showTopTracks = false;
     },
@@ -96,7 +109,7 @@ export default {
   },
   async created() {
     await this.$store.dispatch('fetchUserProfile');
-    await this.$store.dispatch('fetchTopTracks');
+    this.showTopTracks = true;
   }
 };
 </script>
