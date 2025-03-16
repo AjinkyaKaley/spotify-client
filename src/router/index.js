@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import ChatUi from '../views/ChatUi.vue';
-import Dashboard from '../views/Dashboard.vue';
-import Login from '../views/Login.vue';
-import Callback from '../views/Callback.vue';
+import Dashboard from '@/components/Dashboard.vue';
+import Login from '@/components/Login.vue';
+import Callback from '@/components/Callback.vue';
 import Cookies from 'js-cookie';
 
 const routes = [
