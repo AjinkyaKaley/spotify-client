@@ -15,46 +15,14 @@
     <BContainer fluid class="m-2">
       <BRow class="p-2">
         <BCol>
-          <span></span>
-          <BDropdown text="Filter">
-            <BDropdownItem @click="displayTopTracks()">Top Tracks</BDropdownItem>
-            <BDropdownItem @click="displayPlaylist(userProfile)">Playlist</BDropdownItem>
-          </BDropdown>
-        </BCol>
-      </BRow>
-    </BContainer>
-
-    <BContainer fluid class="m-2">
-      <BRow class="p-2" v-if="showTopTracks">
-        <div class="tracks-grid">
-          <BCol v-for="track in topTracks">
-            <div  
-              :key="track.id" 
-              class="track-card">
-              <img :src="track.album.images[0].url" :alt="track.name">
-              <div class="track-info">
-                <h4>{{ track.name }}</h4>
-                <p>{{ track.artists[0].name }}</p>
-              </div>
-            </div>
-          </BCol>
-        </div>
-      </BRow>
-
-      <BRow class="p-2" v-if="showPlaylist">
-        <BCol>
-          <div class="tracks-grid">
-          <BCol v-for="playlist in playlists">
-            <div  
-              :key="playlist.id" 
-              class="track-card">
-              <img :src="playlist.images[0].url" :alt="playlist.name">
-              <div class="track-info">
-                <h4>{{ playlist.name }}</h4>
-              </div>
-            </div>
-          </BCol>
-        </div>
+          <div>
+            <BTable striped hover :items="playlists" :fields="fields" @rowClicked="onPlaylistSelect">
+              <template #cell(name)="data">
+                <!-- <router-link to="/songs"></router-link> -->
+                <b class="text-info">{{ data.item.name.toUpperCase() }}</b>
+              </template>
+            </BTable>
+          </div>
         </BCol>
       </BRow>
     </BContainer>
@@ -62,11 +30,11 @@
 </template>
 
 <script>  
-import { BCol, BContainer, BRow } from 'bootstrap-vue-next';
-import { mapState } from 'vuex';
+import { BCol, BContainer, BDropdown, BRow } from 'bootstrap-vue-next';
+import { mapState, mapActions } from 'vuex';
 
 export default {
-  name: 'Dashboard',
+  name: 'playlists',
   computed: {
     ...mapState(['userProfile', 'topTracks', 'selectedTrack', 'trackMetadata', 'playlists'])
   },
@@ -77,7 +45,8 @@ export default {
       showPlaylist: false,
       componentTypes: [
         { name: 'Text Block', icon: 'bi-file-text', description: 'Add a block of text content' }
-      ]
+      ],
+      fields: ['name']
     }
   },
   methods: {
@@ -88,27 +57,17 @@ export default {
       this.$store.dispatch('logout');
       this.$router.push('/');   
     },
-    async displayTopTracks(){
-      await this.$store.dispatch('fetchTopTracks');
-      this.showTopTracks = true;
-      this.showPlaylist = false;
-    },
-    async displayPlaylist(userProfile){
-      await this.$store.dispatch('fetchUserPlaylists', userProfile.id);
-      this.showPlaylist = true;
-      this.showTopTracks = false;
-    },
-    async showTrackDetails(track) {
-      this.$store.commit('setSelectedTrack', track);
-      await this.$store.dispatch('fetchTrackMetadata', track.id);
-    },
-    closeModal() {
-      this.$store.commit('setSelectedTrack', null);
-      this.$store.commit('setTrackMetadata', null);
+    onPlaylistSelect(      	
+      item,
+      index,
+      event
+    ){
+      console.log(item);
     }
   },
   async created() {
     await this.$store.dispatch('fetchUserProfile');
+    await this.$store.dispatch('fetchUserPlaylists', this.userProfile.id)
     this.showTopTracks = true;
   }
 };

@@ -23,7 +23,7 @@ export default {
       this.$store.commit('setToken', hash.access_token);
       // Clear the hash from URL
       window.location.hash = '';
-      this.$router.push('/dashboard');
+      this.$router.push('/playlists');
     } else {
       // Handle error case
       this.$router.push('/');

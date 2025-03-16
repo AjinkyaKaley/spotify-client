@@ -11,11 +11,16 @@ const routes = [
     component: Login
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
+    path: '/playlists',
+    name: 'playlists',
     component: Dashboard,
     meta: { requiresAuth: true }
   },
+  // {
+  //   path: '/songs',
+  //   name: 'songs',
+  //   component: Songs
+  // },
   {
     path: '/callback',
     name: 'Callback',
