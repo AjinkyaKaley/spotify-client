@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Dashboard from '@/components/Dashboard.vue';
+import PlaylistLayout  from '../components/PlaylistLayout.vue';
+import Details from '@/components/playlist/Details.vue';
 import Login from '@/components/Login.vue';
 import Callback from '@/components/Callback.vue';
 import Cookies from 'js-cookie';
@@ -13,14 +14,13 @@ const routes = [
   {
     path: '/playlists',
     name: 'playlists',
-    component: Dashboard,
-    meta: { requiresAuth: true }
+    component: PlaylistLayout,
   },
-  // {
-  //   path: '/songs',
-  //   name: 'songs',
-  //   component: Songs
-  // },
+  {
+    path: '/details',
+    name: 'details',
+    component: Details
+  },
   {
     path: '/callback',
     name: 'Callback',

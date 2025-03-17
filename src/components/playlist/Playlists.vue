@@ -1,91 +1,48 @@
 <template>
-  <div>
-    <BContainer fluid class="m-2">
-      <BRow class="bg-secondary p-2">
-        <BCol>
-          <div class="user-profile" v-if="userProfile">
-            <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
-            <h2>{{ userProfile.display_name }}</h2>
-            <BButton @click="logout">Logout</BButton>
-          </div>
-        </BCol>
-      </BRow>
-    </BContainer>
-
-    <BContainer fluid class="m-2">
-      <BRow class="p-2">
-        <BCol>
-          <div>
-            <BTable striped hover :items="playlists" :fields="fields" @rowClicked="onPlaylistSelect">
-              <template #cell(name)="data">
-                <!-- <router-link to="/songs"></router-link> -->
-                <b class="text-info">{{ data.item.name.toUpperCase() }}</b>
-              </template>
-            </BTable>
-          </div>
-        </BCol>
-      </BRow>
-    </BContainer>
-  </div>
+  <BContainer fluid>
+    <BRow>
+      <BCol>
+        <BTable
+          :items="playlists"
+          :fields="fields">
+          <template #cell(name)="data">
+            <BLink to="/details"> {{ data.value }} </BLink>
+          </template>
+        </BTable>
+      </BCol>
+    </BRow>
+  </BContainer>
+  <router-view/>
 </template>
 
 <script>  
-import { BCol, BContainer, BDropdown, BRow } from 'bootstrap-vue-next';
-import { mapState, mapActions } from 'vuex';
+import { BCloseButton, BCol, BContainer, BDropdown, BFormRow, BRow, BTable, BLink } from 'bootstrap-vue-next';
+import { mapState } from 'vuex';
 
 export default {
-  name: 'playlists',
+  name: 'playlistsNames',
+  props: [
+    'userprofile'
+  ],
   computed: {
-    ...mapState(['userProfile', 'topTracks', 'selectedTrack', 'trackMetadata', 'playlists'])
+    ...mapState(['playlists'])
+  },
+  mounted(){
+    console.log(this.userprofile.id);
+    this.$store.dispatch('fetchUserPlaylists', this.userprofile.id );
   },
   data(){
     return{
-      sidebarCollapsed: false,
-      showTopTracks: false,
-      showPlaylist: false,
-      componentTypes: [
-        { name: 'Text Block', icon: 'bi-file-text', description: 'Add a block of text content' }
-      ],
       fields: ['name']
     }
   },
   methods: {
-    toggleSidebar(){
-      this.sidebarCollapsed = !this.sidebarCollapsed
-    },
-    logout() {
-      this.$store.dispatch('logout');
-      this.$router.push('/');   
-    },
-    onPlaylistSelect(      	
-      item,
-      index,
-      event
-    ){
-      console.log(item);
-    }
-  },
-  async created() {
-    await this.$store.dispatch('fetchUserProfile');
-    await this.$store.dispatch('fetchUserPlaylists', this.userProfile.id)
-    this.showTopTracks = true;
+
   }
 };
 </script>
 
 <style lang="scss">
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.profile-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
 
 .tracks-grid {
   display: grid;
