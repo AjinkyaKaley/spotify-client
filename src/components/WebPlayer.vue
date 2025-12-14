@@ -106,190 +106,195 @@
   </BContainer>
 </template>
 
-<script>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, computed, Ref } from 'vue';
 import { useStore } from 'vuex';
+import type { RootState } from '../types/store';
 
-export default {
-  name: 'WebPlayer',
-  setup() {
-    const store = useStore();
-    const player = ref(null);
-    const deviceId = ref(null);
-    const isSDKReady = ref(false);
-    const isPaused = ref(true);
-    const currentTrack = ref(null);
-    const position = ref(0);
-    const duration = ref(0);
-    const volume = ref(50);
-    const playerName = ref('Web Playback SDK');
-    const positionInterval = ref(null);
+interface SpotifyPlayer {
+  connect: () => Promise<boolean>;
+  disconnect: () => void;
+  addListener: (event: string, callback: (data: any) => void) => void;
+  togglePlay: () => void;
+  nextTrack: () => void;
+  previousTrack: () => void;
+  setVolume: (volume: number) => void;
+}
 
-    const progressPercent = computed(() => {
-      if (duration.value === 0) return 0;
-      return (position.value / duration.value) * 100;
-    });
+interface SpotifyTrack {
+  name: string;
+  artists: Array<{ name: string }>;
+  album: {
+    images: Array<{ url: string }>;
+  };
+}
 
-    const formatTime = (ms) => {
-      const totalSeconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+declare global {
+  interface Window {
+    Spotify?: {
+      Player: new (options: any) => SpotifyPlayer;
+    };
+    onSpotifyWebPlaybackSDKReady?: () => void;
+  }
+}
+
+const store = useStore<RootState>();
+const player: Ref<SpotifyPlayer | null> = ref(null);
+const deviceId = ref<string | null>(null);
+const isSDKReady = ref(false);
+const isPaused = ref(true);
+const currentTrack = ref<SpotifyTrack | null>(null);
+const position = ref(0);
+const duration = ref(0);
+const volume = ref(50);
+const playerName = ref('Web Playback SDK');
+const positionInterval: Ref<NodeJS.Timeout | null> = ref(null);
+
+const progressPercent = computed(() => {
+  if (duration.value === 0) return 0;
+  return (position.value / duration.value) * 100;
+});
+
+const formatTime = (ms: number): string => {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+const loadSpotifySDK = (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (window.Spotify) {
+      resolve();
+      return;
+    }
+
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      resolve();
     };
 
-    const loadSpotifySDK = () => {
-      return new Promise((resolve) => {
-        if (window.Spotify) {
-          resolve();
-          return;
-        }
+    const script = document.createElement('script');
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    script.async = true;
+    document.body.appendChild(script);
+  });
+};
 
-        window.onSpotifyWebPlaybackSDKReady = () => {
-          resolve();
-        };
+const initializePlayer = async (): Promise<void> => {
+  const token = store.state.token;
 
-        const script = document.createElement('script');
-        script.src = 'https://sdk.scdn.co/spotify-player.js';
-        script.async = true;
-        document.body.appendChild(script);
-      });
-    };
+  if (!token) {
+    console.error('No access token available');
+    return;
+  }
 
-    const initializePlayer = async () => {
-      const token = store.state.token;
+  if (!window.Spotify) {
+    console.error('Spotify SDK not loaded');
+    return;
+  }
 
-      if (!token) {
-        console.error('No access token available');
-        return;
-      }
+  player.value = new window.Spotify.Player({
+    name: playerName.value,
+    getOAuthToken: (cb: (token: string) => void) => {
+      cb(token);
+    },
+    volume: volume.value / 100
+  });
 
-      player.value = new window.Spotify.Player({
-        name: playerName.value,
-        getOAuthToken: (cb) => {
-          cb(token);
-        },
-        volume: volume.value / 100
-      });
+  player.value.addListener('initialization_error', ({ message }: { message: string }) => {
+    console.error('Initialization Error:', message);
+  });
 
-      // Error handling
-      player.value.addListener('initialization_error', ({ message }) => {
-        console.error('Initialization Error:', message);
-      });
+  player.value.addListener('authentication_error', ({ message }: { message: string }) => {
+    console.error('Authentication Error:', message);
+  });
 
-      player.value.addListener('authentication_error', ({ message }) => {
-        console.error('Authentication Error:', message);
-      });
+  player.value.addListener('account_error', ({ message }: { message: string }) => {
+    console.error('Account Error:', message);
+  });
 
-      player.value.addListener('account_error', ({ message }) => {
-        console.error('Account Error:', message);
-      });
+  player.value.addListener('playback_error', ({ message }: { message: string }) => {
+    console.error('Playback Error:', message);
+  });
 
-      player.value.addListener('playback_error', ({ message }) => {
-        console.error('Playback Error:', message);
-      });
+  player.value.addListener('ready', ({ device_id }: { device_id: string }) => {
+    console.log('Ready with Device ID', device_id);
+    deviceId.value = device_id;
+    store.commit('setPlayerDeviceId', device_id);
+  });
 
-      // Ready
-      player.value.addListener('ready', ({ device_id }) => {
-        console.log('Ready with Device ID', device_id);
-        deviceId.value = device_id;
-        store.commit('setPlayerDeviceId', device_id);
-      });
+  player.value.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+    console.log('Device ID has gone offline', device_id);
+    deviceId.value = null;
+  });
 
-      // Not Ready
-      player.value.addListener('not_ready', ({ device_id }) => {
-        console.log('Device ID has gone offline', device_id);
-        deviceId.value = null;
-      });
+  player.value.addListener('player_state_changed', (state: any) => {
+    if (!state) {
+      return;
+    }
 
-      // Player State Changed
-      player.value.addListener('player_state_changed', (state) => {
-        if (!state) {
-          return;
-        }
+    currentTrack.value = state.track_window.current_track;
+    isPaused.value = state.paused;
+    position.value = state.position;
+    duration.value = state.duration;
 
-        currentTrack.value = state.track_window.current_track;
-        isPaused.value = state.paused;
-        position.value = state.position;
-        duration.value = state.duration;
-
-        // Start position tracking when playing
-        if (!state.paused) {
-          startPositionTracking();
-        } else {
-          stopPositionTracking();
-        }
-      });
-
-      // Connect to the player
-      const connected = await player.value.connect();
-      if (connected) {
-        console.log('The Web Playback SDK successfully connected to Spotify!');
-        isSDKReady.value = true;
-      }
-    };
-
-    const startPositionTracking = () => {
+    if (!state.paused) {
+      startPositionTracking();
+    } else {
       stopPositionTracking();
-      positionInterval.value = setInterval(() => {
-        if (!isPaused.value) {
-          position.value += 1000;
-        }
-      }, 1000);
-    };
+    }
+  });
 
-    const stopPositionTracking = () => {
-      if (positionInterval.value) {
-        clearInterval(positionInterval.value);
-        positionInterval.value = null;
-      }
-    };
-
-    const togglePlay = () => {
-      player.value?.togglePlay();
-    };
-
-    const nextTrack = () => {
-      player.value?.nextTrack();
-    };
-
-    const previousTrack = () => {
-      player.value?.previousTrack();
-    };
-
-    const setVolume = () => {
-      player.value?.setVolume(volume.value / 100);
-    };
-
-    onMounted(async () => {
-      await loadSpotifySDK();
-      await initializePlayer();
-    });
-
-    onBeforeUnmount(() => {
-      stopPositionTracking();
-      if (player.value) {
-        player.value.disconnect();
-      }
-    });
-
-    return {
-      deviceId,
-      isSDKReady,
-      isPaused,
-      currentTrack,
-      position,
-      duration,
-      volume,
-      playerName,
-      progressPercent,
-      formatTime,
-      togglePlay,
-      nextTrack,
-      previousTrack,
-      setVolume
-    };
+  const connected = await player.value.connect();
+  if (connected) {
+    console.log('The Web Playback SDK successfully connected to Spotify!');
+    isSDKReady.value = true;
   }
 };
+
+const startPositionTracking = (): void => {
+  stopPositionTracking();
+  positionInterval.value = setInterval(() => {
+    if (!isPaused.value) {
+      position.value += 1000;
+    }
+  }, 1000);
+};
+
+const stopPositionTracking = (): void => {
+  if (positionInterval.value) {
+    clearInterval(positionInterval.value);
+    positionInterval.value = null;
+  }
+};
+
+const togglePlay = (): void => {
+  player.value?.togglePlay();
+};
+
+const nextTrack = (): void => {
+  player.value?.nextTrack();
+};
+
+const previousTrack = (): void => {
+  player.value?.previousTrack();
+};
+
+const setVolume = (): void => {
+  player.value?.setVolume(volume.value / 100);
+};
+
+onMounted(async () => {
+  await loadSpotifySDK();
+  await initializePlayer();
+});
+
+onBeforeUnmount(() => {
+  stopPositionTracking();
+  if (player.value) {
+    player.value.disconnect();
+  }
+});
 </script>
 
 <style scoped>

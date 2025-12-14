@@ -4,7 +4,7 @@
     <BRow class="bg-secondary p-2 header-row">
       <BCol>
         <div class="user-profile" v-if="userProfile">
-          <img :src="userProfile.images[0]?.url" alt="Profile" class="profile-image">
+          <img :src="userProfile.images?.[0]?.url" alt="Profile" class="profile-image">
           <h2>{{ userProfile.display_name }}</h2>
           <BButton @click="logout">Logout</BButton>
         </div>
@@ -31,29 +31,29 @@
     </BRow>
   </BContainer>
 </template>
-<script>
-import { mapState } from 'vuex';
-import WebPlayer from '@/components/WebPlayer.vue';
 
-export default {
-  name: 'playlistsLayout',
-  components: {
-    WebPlayer
-  },
-  computed: {
-    ...mapState(['userProfile'])
-  },
-  methods: {
-    logout() {
-      this.$store.dispatch('logout');
-      this.$router.push('/');
-    }
-  },
-  async created() {
-    await this.$store.dispatch('fetchUserProfile');
-  }
-}
+<script setup lang="ts">
+import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
+import WebPlayer from '@/components/WebPlayer.vue';
+import type { RootState } from '../types/store';
+
+const router = useRouter();
+const store = useStore<RootState>();
+
+const userProfile = computed(() => store.state.userProfile);
+
+const logout = (): void => {
+  store.dispatch('logout');
+  router.push('/');
+};
+
+onMounted(async () => {
+  await store.dispatch('fetchUserProfile');
+});
 </script>
+
 <style scoped>
 .playlist-layout {
   height: 100vh;

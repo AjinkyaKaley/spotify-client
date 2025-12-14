@@ -1,13 +1,14 @@
-import { createStore } from 'vuex';
+import { createStore, Store } from 'vuex';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { SPOTIFY_CONFIG } from '../config/spotify';
+import type { RootState, UserProfile, Track, Playlist, TrackMetadata } from '../types/store';
 
-export default createStore({
+export default createStore<RootState>({
   state: {
     token: Cookies.get('spotify_token') || null,
     refreshToken: Cookies.get('spotify_refresh_token') || null,
-    tokenExpiry: parseInt(Cookies.get('spotify_token_expiry')) || null,
+    tokenExpiry: parseInt(Cookies.get('spotify_token_expiry') || '0') || null,
     userProfile: null,
     topTracks: [],
     recentlyPlayed: [],
@@ -18,49 +19,51 @@ export default createStore({
     selectedPlaylist: null
   },
   mutations: {
-    setToken(state, token) {
+    setToken(state, token: string | null) {
       state.token = token;
       if (token) {
-        Cookies.set('spotify_token', token, { expires: 1 }); // expires in 1 day
+        Cookies.set('spotify_token', token, { expires: 1 });
       } else {
         Cookies.remove('spotify_token');
       }
     },
-    setTokens(state, { accessToken, refreshToken, expiresIn }) {
+    setTokens(state, { accessToken, refreshToken, expiresIn }: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    }) {
       state.token = accessToken;
       state.refreshToken = refreshToken;
 
-      // Calculate token expiry time (current time + expires_in seconds)
       const expiryTime = Date.now() + (expiresIn * 1000);
       state.tokenExpiry = expiryTime;
 
-      // Store in cookies
       Cookies.set('spotify_token', accessToken, { expires: 1 });
-      Cookies.set('spotify_refresh_token', refreshToken, { expires: 365 }); // refresh token valid for longer
+      Cookies.set('spotify_refresh_token', refreshToken, { expires: 365 });
       Cookies.set('spotify_token_expiry', expiryTime.toString(), { expires: 1 });
     },
-    setUserProfile(state, profile) {
+    setUserProfile(state, profile: UserProfile | null) {
       state.userProfile = profile;
     },
-    setTopTracks(state, tracks) {
+    setTopTracks(state, tracks: Track[]) {
       state.topTracks = tracks;
     },
-    setRecentlyPlayed(state, tracks) {
+    setRecentlyPlayed(state, tracks: Track[]) {
       state.recentlyPlayed = tracks;
     },
-    setPlaylists(state, playlists) {
+    setPlaylists(state, playlists: Playlist[]) {
       state.playlists = playlists;
     },
-    setSelectedTrack(state, track) {
+    setSelectedTrack(state, track: Track | null) {
       state.selectedTrack = track;
     },
-    setTrackMetadata(state, metadata) {
+    setTrackMetadata(state, metadata: TrackMetadata | null) {
       state.trackMetadata = metadata;
     },
-    setPlayerDeviceId(state, deviceId) {
+    setPlayerDeviceId(state, deviceId: string | null) {
       state.playerDeviceId = deviceId;
     },
-    setSelectedPlaylist(state, playlist) {
+    setSelectedPlaylist(state, playlist: Playlist | null) {
       state.selectedPlaylist = playlist;
     }
   },
@@ -72,7 +75,6 @@ export default createStore({
       commit('setRecentlyPlayed', []);
       commit('setPlaylists', []);
 
-      // Clear refresh token and expiry
       Cookies.remove('spotify_refresh_token');
       Cookies.remove('spotify_token_expiry');
     },
@@ -102,7 +104,6 @@ export default createStore({
 
         const data = await response.json();
 
-        // Update tokens (refresh token may or may not be included in response)
         commit('setTokens', {
           accessToken: data.access_token,
           refreshToken: data.refresh_token || state.refreshToken,
@@ -112,13 +113,11 @@ export default createStore({
         return data.access_token;
       } catch (error) {
         console.error('Error refreshing token:', error);
-        // If refresh fails, logout the user
         commit('setToken', null);
         throw error;
       }
     },
     async ensureValidToken({ state, dispatch }) {
-      // Check if token is expired or about to expire (within 5 minutes)
       const isTokenExpired = state.tokenExpiry && Date.now() >= (state.tokenExpiry - 5 * 60 * 1000);
 
       if (isTokenExpired && state.refreshToken) {
@@ -127,10 +126,9 @@ export default createStore({
     },
     async fetchUserProfile({ commit, state, dispatch }) {
       try {
-        // Ensure we have a valid token before making the request
         await dispatch('ensureValidToken');
 
-        const response = await axios.get('https://api.spotify.com/v1/me', {
+        const response = await axios.get<UserProfile>('https://api.spotify.com/v1/me', {
           headers: {
             Authorization: `Bearer ${state.token}`
           }
@@ -145,7 +143,7 @@ export default createStore({
       try {
         await dispatch('ensureValidToken');
 
-        const response = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
+        const response = await axios.get<{ items: Track[] }>('https://api.spotify.com/v1/me/top/tracks', {
           headers: {
             Authorization: `Bearer ${state.token}`
           }
@@ -156,11 +154,11 @@ export default createStore({
         throw error;
       }
     },
-    async fetchTrackMetadata({ commit, state, dispatch }, trackId) {
+    async fetchTrackMetadata({ commit, state, dispatch }, trackId: string) {
       try {
         await dispatch('ensureValidToken');
 
-        const response = await axios.get(`https://api.spotify.com/v1/audio-features/${trackId}`, {
+        const response = await axios.get<TrackMetadata>(`https://api.spotify.com/v1/audio-features/${trackId}`, {
           headers: {
             Authorization: `Bearer ${state.token}`
           }
@@ -171,11 +169,11 @@ export default createStore({
         throw error;
       }
     },
-    async fetchUserPlaylists({ commit, state, dispatch }, userId) {
+    async fetchUserPlaylists({ commit, state, dispatch }, userId: string) {
       try {
         await dispatch('ensureValidToken');
 
-        const response = await axios.get(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+        const response = await axios.get<{ items: Playlist[] }>(`https://api.spotify.com/v1/users/${userId}/playlists`, {
           headers: {
             Authorization: `Bearer ${state.token}`
           }
@@ -186,7 +184,7 @@ export default createStore({
         throw error;
       }
     },
-    async playPlaylist({ state, dispatch }, { playlistUri, deviceId }) {
+    async playPlaylist({ state, dispatch }, { playlistUri, deviceId }: { playlistUri: string; deviceId: string }) {
       try {
         await dispatch('ensureValidToken');
 
@@ -209,4 +207,6 @@ export default createStore({
       }
     }
   }
-}); 
+});
+
+export type { RootState };

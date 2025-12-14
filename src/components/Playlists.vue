@@ -35,54 +35,55 @@
   <router-view/>
 </template>
 
-<script>
-import { BCloseButton, BCol, BContainer, BDropdown, BFormRow, BRow, BTable, BLink, BButton } from 'bootstrap-vue-next';
-import { mapState } from 'vuex';
+<script setup lang="ts">
+import { computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
+import type { RootState, UserProfile, Playlist } from '../types/store';
 
-export default {
-  name: 'playlistsNames',
-  props: [
-    'userprofile'
-  ],
-  computed: {
-    ...mapState(['playlists', 'playerDeviceId', 'selectedPlaylist'])
-  },
-  mounted(){
-    console.log(this.userprofile.id);
-    this.$store.dispatch('fetchUserPlaylists', this.userprofile.id );
-  },
-  data(){
-    return{
-      fields: ['name']
-    }
-  },
-  methods: {
-    async playPlaylistHandler(playlist) {
-      if (!this.playerDeviceId) {
-        alert('Player is not ready. Please wait for the player to initialize.');
-        return;
-      }
+interface Props {
+  userprofile: UserProfile;
+}
 
-      try {
-        await this.$store.dispatch('playPlaylist', {
-          playlistUri: playlist.uri,
-          deviceId: this.playerDeviceId
-        });
-        this.$store.commit('setSelectedPlaylist', playlist);
-      } catch (error) {
-        console.error('Error playing playlist:', error);
-        alert('Failed to play playlist. Make sure Spotify Premium is active.');
-      }
-    },
-    isPlayingPlaylist(playlistUri) {
-      return this.selectedPlaylist && this.selectedPlaylist.uri === playlistUri;
-    },
-    rowClass(item, type) {
-      if (!item || type !== 'row') return;
-      if (this.isPlayingPlaylist(item.uri)) return 'table-active';
-    }
+const props = defineProps<Props>();
+const store = useStore<RootState>();
+
+const playlists = computed(() => store.state.playlists);
+const playerDeviceId = computed(() => store.state.playerDeviceId);
+const selectedPlaylist = computed(() => store.state.selectedPlaylist);
+
+const fields = ['name'];
+
+const playPlaylistHandler = async (playlist: Playlist): Promise<void> => {
+  if (!playerDeviceId.value) {
+    alert('Player is not ready. Please wait for the player to initialize.');
+    return;
+  }
+
+  try {
+    await store.dispatch('playPlaylist', {
+      playlistUri: playlist.uri,
+      deviceId: playerDeviceId.value
+    });
+    store.commit('setSelectedPlaylist', playlist);
+  } catch (error) {
+    console.error('Error playing playlist:', error);
+    alert('Failed to play playlist. Make sure Spotify Premium is active.');
   }
 };
+
+const isPlayingPlaylist = (playlistUri: string): boolean => {
+  return selectedPlaylist.value !== null && selectedPlaylist.value.uri === playlistUri;
+};
+
+const rowClass = (item: Playlist | null, type: string): string | undefined => {
+  if (!item || type !== 'row') return;
+  if (isPlayingPlaylist(item.uri)) return 'table-active';
+};
+
+onMounted(() => {
+  console.log(props.userprofile.id);
+  store.dispatch('fetchUserPlaylists', props.userprofile.id);
+});
 </script>
 
 <style lang="scss">
@@ -286,4 +287,4 @@ export default {
   border-radius: 8px;
   margin-top: 20px;
 }
-</style> 
+</style>

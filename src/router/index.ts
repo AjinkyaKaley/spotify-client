@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import PlaylistLayout  from '@/views/PlaylistLayout.vue';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import PlaylistLayout from '@/views/PlaylistLayout.vue';
 import Details from '@/components/playlist/Details.vue';
 import Login from '@/components/Login.vue';
 import Callback from '@/components/Callback.vue';
 import Cookies from 'js-cookie';
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Login',
@@ -15,11 +15,6 @@ const routes = [
     path: '/playlists',
     name: 'playlists',
     component: PlaylistLayout,
-  },
-  {
-    path: '/details',
-    name: 'details',
-    component: Details
   },
   {
     path: '/callback',
@@ -33,7 +28,7 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const token = Cookies.get('spotify_token');
   if (to.matched.some(record => record.meta.requiresAuth) && !token) {
     next('/');
@@ -42,4 +37,4 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-export default router; 
+export default router;

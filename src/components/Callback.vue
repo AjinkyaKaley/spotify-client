@@ -5,102 +5,93 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import { SPOTIFY_CONFIG } from '../config/spotify';
+import type { RootState } from '../types/store';
 
-export default {
-  name: 'Callback',
-  data() {
-    return {
-      error: null
-    };
-  },
-  async created() {
-    await this.handleCallback();
-  },
-  methods: {
-    async handleCallback() {
-      try {
-        // Extract code and state from query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        const error = urlParams.get('error');
+const router = useRouter();
+const store = useStore<RootState>();
+const error = ref<string | null>(null);
 
-        // Handle authorization error
-        if (error) {
-          this.error = `Authorization failed: ${error}`;
-          setTimeout(() => this.$router.push('/'), 3000);
-          return;
-        }
+const handleCallback = async (): Promise<void> => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const authError = urlParams.get('error');
 
-        // Verify state to prevent CSRF attacks
-        const savedState = window.localStorage.getItem('auth_state');
-        if (state !== savedState) {
-          this.error = 'State mismatch. Possible CSRF attack.';
-          setTimeout(() => this.$router.push('/'), 3000);
-          return;
-        }
-
-        if (!code) {
-          this.error = 'No authorization code received.';
-          setTimeout(() => this.$router.push('/'), 3000);
-          return;
-        }
-
-        // Retrieve code verifier from localStorage
-        const codeVerifier = window.localStorage.getItem('code_verifier');
-        if (!codeVerifier) {
-          this.error = 'Code verifier not found. Please try logging in again.';
-          setTimeout(() => this.$router.push('/'), 3000);
-          return;
-        }
-
-        // Exchange authorization code for access token
-        const payload = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams({
-            client_id: SPOTIFY_CONFIG.CLIENT_ID,
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: SPOTIFY_CONFIG.REDIRECT_URI,
-            code_verifier: codeVerifier
-          })
-        };
-
-        const response = await fetch(SPOTIFY_CONFIG.TOKEN_ENDPOINT, payload);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error_description || 'Token exchange failed');
-        }
-
-        const data = await response.json();
-
-        // Store tokens in Vuex store
-        this.$store.commit('setTokens', {
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token,
-          expiresIn: data.expires_in
-        });
-
-        // Clean up localStorage
-        window.localStorage.removeItem('code_verifier');
-        window.localStorage.removeItem('auth_state');
-
-        // Redirect to playlists page
-        this.$router.push('/playlists');
-      } catch (err) {
-        console.error('Callback error:', err);
-        this.error = err.message || 'An error occurred during authentication.';
-        setTimeout(() => this.$router.push('/'), 3000);
-      }
+    if (authError) {
+      error.value = `Authorization failed: ${authError}`;
+      setTimeout(() => router.push('/'), 3000);
+      return;
     }
+
+    const savedState = window.localStorage.getItem('auth_state');
+    if (state !== savedState) {
+      error.value = 'State mismatch. Possible CSRF attack.';
+      setTimeout(() => router.push('/'), 3000);
+      return;
+    }
+
+    if (!code) {
+      error.value = 'No authorization code received.';
+      setTimeout(() => router.push('/'), 3000);
+      return;
+    }
+
+    const codeVerifier = window.localStorage.getItem('code_verifier');
+    if (!codeVerifier) {
+      error.value = 'Code verifier not found. Please try logging in again.';
+      setTimeout(() => router.push('/'), 3000);
+      return;
+    }
+
+    const payload = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        client_id: SPOTIFY_CONFIG.CLIENT_ID,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: SPOTIFY_CONFIG.REDIRECT_URI,
+        code_verifier: codeVerifier
+      })
+    };
+
+    const response = await fetch(SPOTIFY_CONFIG.TOKEN_ENDPOINT, payload);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error_description || 'Token exchange failed');
+    }
+
+    const data = await response.json();
+
+    store.commit('setTokens', {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in
+    });
+
+    window.localStorage.removeItem('code_verifier');
+    window.localStorage.removeItem('auth_state');
+
+    router.push('/playlists');
+  } catch (err) {
+    console.error('Callback error:', err);
+    error.value = (err as Error).message || 'An error occurred during authentication.';
+    setTimeout(() => router.push('/'), 3000);
   }
 };
+
+onMounted(() => {
+  handleCallback();
+});
 </script>
 
 <style scoped>
@@ -115,4 +106,4 @@ export default {
   color: #ff4444;
   font-size: 16px;
 }
-</style> 
+</style>
