@@ -8,8 +8,8 @@ export interface SpotifyConfig {
 }
 
 export const SPOTIFY_CONFIG: SpotifyConfig = {
-  CLIENT_ID: '20957683ed204cd58fae941a90ddd468',
-  REDIRECT_URI: 'http://127.0.0.1:5173/callback',
+  CLIENT_ID: import.meta.env.VITE_SPOTIFY_CLIENT_ID || '',
+  REDIRECT_URI: import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:5173/callback',
   AUTH_ENDPOINT: 'https://accounts.spotify.com/authorize',
   TOKEN_ENDPOINT: 'https://accounts.spotify.com/api/token',
   RESPONSE_TYPE: 'code',
