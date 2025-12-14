@@ -1,7 +1,5 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
-// import tailwindcss from '@tailwindcss/vite'
 import Components from 'unplugin-vue-components/vite'
 import {BootstrapVueNextResolver} from 'bootstrap-vue-next'
 
@@ -16,6 +14,7 @@ export default defineConfig({
     exclude:[ 'fsevents']
   },
   server: {
+    host: '127.0.0.1', // Match the Spotify callback URL
     port: 5173,
     fs: {
       strict: false

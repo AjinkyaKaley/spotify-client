@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import PlaylistLayout  from '../components/PlaylistLayout.vue';
+import PlaylistLayout  from '@/views/PlaylistLayout.vue';
 import Details from '@/components/playlist/Details.vue';
 import Login from '@/components/Login.vue';
 import Callback from '@/components/Callback.vue';

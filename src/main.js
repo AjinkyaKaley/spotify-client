@@ -3,9 +3,13 @@ import { createBootstrap } from 'bootstrap-vue-next'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import { setupAxiosInterceptor } from './utils/axios-interceptor'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+
+// Setup axios interceptor for automatic token refresh
+setupAxiosInterceptor()
 
 const app = createApp(App)
 app.use(router)

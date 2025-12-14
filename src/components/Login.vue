@@ -12,13 +12,35 @@
 <script>
 import { BButton, BCol, BContainer, BRow } from 'bootstrap-vue-next';
 import { SPOTIFY_CONFIG } from '../config/spotify';
+import { generateCodeVerifier, generateCodeChallenge, generateState } from '../utils/pkce';
 
 export default {
   name: 'Login',
   methods: {
-    login() {
+    async login() {
       const scope = 'user-read-private user-read-email user-top-read user-read-recently-played playlist-read-private playlist-read-collaborative';
-      window.location.href = `${SPOTIFY_CONFIG.AUTH_ENDPOINT}?client_id=${SPOTIFY_CONFIG.CLIENT_ID}&redirect_uri=${SPOTIFY_CONFIG.REDIRECT_URI}&response_type=${SPOTIFY_CONFIG.RESPONSE_TYPE}&scope=${scope}`;
+
+      // Generate PKCE code verifier and challenge
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const state = generateState();
+
+      // Store code verifier and state in localStorage for use in callback
+      window.localStorage.setItem('code_verifier', codeVerifier);
+      window.localStorage.setItem('auth_state', state);
+
+      // Build authorization URL with PKCE parameters
+      const params = new URLSearchParams({
+        client_id: SPOTIFY_CONFIG.CLIENT_ID,
+        response_type: SPOTIFY_CONFIG.RESPONSE_TYPE,
+        redirect_uri: SPOTIFY_CONFIG.REDIRECT_URI,
+        code_challenge_method: SPOTIFY_CONFIG.CODE_CHALLENGE_METHOD,
+        code_challenge: codeChallenge,
+        state: state,
+        scope: scope
+      });
+
+      window.location.href = `${SPOTIFY_CONFIG.AUTH_ENDPOINT}?${params.toString()}`;
     }
   }
 };
