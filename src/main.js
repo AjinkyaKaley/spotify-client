@@ -7,6 +7,7 @@ import { setupAxiosInterceptor } from './utils/axios-interceptor'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 
 // Setup axios interceptor for automatic token refresh
 setupAxiosInterceptor()
@@ -16,4 +17,4 @@ app.use(router)
 app.use(store)
 document.documentElement.setAttribute('data-bs-theme', 'dark')
 app.use(createBootstrap)
-app.mount('#app') 
+app.mount('#app')

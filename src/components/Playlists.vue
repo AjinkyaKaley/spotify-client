@@ -1,22 +1,42 @@
 <template>
-  <BContainer fluid>
-    <BRow>
-      <BCol>
-        <BTable
-          :items="playlists"
-          :fields="fields">
-          <template #cell(name)="data">
-            <BLink to="/details"> {{ data.value }} </BLink>
-          </template>
-        </BTable>
-      </BCol>
-    </BRow>
-  </BContainer>
+  <div class="playlists-wrapper">
+    <div class="playlists-scroll-container">
+      <BTable
+        :items="playlists"
+        :fields="fields"
+        hover
+        :tbody-tr-class="rowClass"
+        class="playlists-table">
+        <template #cell(name)="data">
+          <div class="playlist-cell" @click="playPlaylistHandler(data.item)">
+            <img
+              v-if="data.item.images && data.item.images[0]"
+              :src="data.item.images[0].url"
+              alt="Playlist cover"
+              class="playlist-image"
+            >
+            <div class="playlist-info">
+              <span class="playlist-name">{{ data.value }}</span>
+              <small class="text-muted d-block">{{ data.item.tracks.total }} tracks</small>
+            </div>
+            <BButton
+              v-if="isPlayingPlaylist(data.item.uri)"
+              variant="success"
+              size="sm"
+              class="ms-auto play-indicator"
+            >
+              <i class="bi bi-soundwave"></i> Playing
+            </BButton>
+          </div>
+        </template>
+      </BTable>
+    </div>
+  </div>
   <router-view/>
 </template>
 
-<script>  
-import { BCloseButton, BCol, BContainer, BDropdown, BFormRow, BRow, BTable, BLink } from 'bootstrap-vue-next';
+<script>
+import { BCloseButton, BCol, BContainer, BDropdown, BFormRow, BRow, BTable, BLink, BButton } from 'bootstrap-vue-next';
 import { mapState } from 'vuex';
 
 export default {
@@ -25,7 +45,7 @@ export default {
     'userprofile'
   ],
   computed: {
-    ...mapState(['playlists'])
+    ...mapState(['playlists', 'playerDeviceId', 'selectedPlaylist'])
   },
   mounted(){
     console.log(this.userprofile.id);
@@ -37,12 +57,106 @@ export default {
     }
   },
   methods: {
+    async playPlaylistHandler(playlist) {
+      if (!this.playerDeviceId) {
+        alert('Player is not ready. Please wait for the player to initialize.');
+        return;
+      }
 
+      try {
+        await this.$store.dispatch('playPlaylist', {
+          playlistUri: playlist.uri,
+          deviceId: this.playerDeviceId
+        });
+        this.$store.commit('setSelectedPlaylist', playlist);
+      } catch (error) {
+        console.error('Error playing playlist:', error);
+        alert('Failed to play playlist. Make sure Spotify Premium is active.');
+      }
+    },
+    isPlayingPlaylist(playlistUri) {
+      return this.selectedPlaylist && this.selectedPlaylist.uri === playlistUri;
+    },
+    rowClass(item, type) {
+      if (!item || type !== 'row') return;
+      if (this.isPlayingPlaylist(item.uri)) return 'table-active';
+    }
   }
 };
 </script>
 
 <style lang="scss">
+.playlists-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.playlists-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Custom scrollbar */
+.playlists-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.playlists-scroll-container::-webkit-scrollbar-track {
+  background: #282828;
+  border-radius: 4px;
+}
+
+.playlists-scroll-container::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+}
+
+.playlists-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.playlists-table {
+  margin-bottom: 0;
+}
+
+.playlist-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.playlist-cell:hover {
+  background-color: rgba(29, 185, 84, 0.1);
+}
+
+.playlist-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.playlist-info {
+  flex: 1;
+}
+
+.playlist-name {
+  font-weight: 500;
+  color: #fff;
+}
+
+.play-indicator {
+  margin-left: auto;
+}
 
 .tracks-grid {
   display: grid;

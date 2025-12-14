@@ -13,7 +13,9 @@ export default createStore({
     recentlyPlayed: [],
     playlists: [],
     selectedTrack: null,
-    trackMetadata: null
+    trackMetadata: null,
+    playerDeviceId: null,
+    selectedPlaylist: null
   },
   mutations: {
     setToken(state, token) {
@@ -54,6 +56,12 @@ export default createStore({
     },
     setTrackMetadata(state, metadata) {
       state.trackMetadata = metadata;
+    },
+    setPlayerDeviceId(state, deviceId) {
+      state.playerDeviceId = deviceId;
+    },
+    setSelectedPlaylist(state, playlist) {
+      state.selectedPlaylist = playlist;
     }
   },
   actions: {
@@ -175,6 +183,28 @@ export default createStore({
         commit('setPlaylists', response.data.items);
       } catch (error) {
         console.error('Error fetching playlists:', error);
+        throw error;
+      }
+    },
+    async playPlaylist({ state, dispatch }, { playlistUri, deviceId }) {
+      try {
+        await dispatch('ensureValidToken');
+
+        const response = await axios.put(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            context_uri: playlistUri
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${state.token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error('Error playing playlist:', error);
         throw error;
       }
     }

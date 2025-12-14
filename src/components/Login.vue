@@ -18,7 +18,7 @@ export default {
   name: 'Login',
   methods: {
     async login() {
-      const scope = 'user-read-private user-read-email user-top-read user-read-recently-played playlist-read-private playlist-read-collaborative';
+      const scope = 'streaming user-read-private user-read-email user-top-read user-read-recently-played playlist-read-private playlist-read-collaborative';
 
       // Generate PKCE code verifier and challenge
       const codeVerifier = generateCodeVerifier(64);
