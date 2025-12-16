@@ -3,6 +3,7 @@ import PlaylistLayout from '@/views/PlaylistLayout.vue';
 import Details from '@/components/playlist/Details.vue';
 import Login from '@/components/Login.vue';
 import Callback from '@/components/Callback.vue';
+import About from '@/components/About.vue';
 import Cookies from 'js-cookie';
 
 const routes: RouteRecordRaw[] = [
@@ -20,6 +21,11 @@ const routes: RouteRecordRaw[] = [
     path: '/callback',
     name: 'Callback',
     component: Callback
+  },
+  {
+    path: '/about',
+    name: 'About',
+    component: About
   }
 ];
 

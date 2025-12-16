@@ -2,9 +2,14 @@
   <BContainer fluid>
     <BRow class="d-flex align-items-center justify-content-center vh-100">
       <BCol class="text-center">
-        <BButton @click="login" style="background-color: #1ED760; cursor: pointer">
+        <h1 class="mb-4">Spotify Playlist Viewer</h1>
+        <p class="mb-4">View and explore your Spotify playlists</p>
+        <BButton @click="login" size="lg" style="background-color: #1ED760; cursor: pointer" class="mb-3">
           Login with Spotify
         </BButton>
+        <div>
+          <router-link to="/about" class="text-muted">About this app</router-link>
+        </div>
       </BCol>
     </BRow>
   </BContainer>
